@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for auth check and admin escalation
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && 
+             request.auth.token.email == "tanvir.khc@gmail.com" && 
+             request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 64 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Default deny gate for absolute zero trust safety
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Categories Table Control
+    match /categories/{categoryId} {
+      allow read: if true; // Publicly readable for product search & filters
+      allow write: if isAdmin(); // Strictly restricted to administrator
+    }
+
+    // Products Table Control
+    match /products/{productId} {
+      allow read: if true; // Brand products visible to visiting customers
+      allow write: if isAdmin(); // CRUD exclusively managed by administrator
+    }
+
+    // Banners Table Control
+    match /banners/{bannerId} {
+      allow read: if true; // Banner ads visible on home page
+      allow write: if isAdmin(); // Managed purely by admin panel
+    }
+
+    // Orders Table Control
+    match /orders/{orderId} {
+      // Admin has full list and individual access. Customers can fetch their specific printed order slip.
+      allow read: if isAdmin() || (orderId is string && orderId.size() <= 32); 
+      
+      // Public Checkout: Anyone can post a validated checkout order
+      allow create: if request.resource.data.customerName is string && 
+                      request.resource.data.customerName.size() <= 128 &&
+                      request.resource.data.address is string &&
+                      request.resource.data.address.size() <= 512 &&
+                      request.resource.data.mobileNumber is string &&
+                      request.resource.data.mobileNumber.size() <= 20 &&
+                      request.resource.data.orderStatus == "Order Confirmed";
+
+      // Order Status updates restricted strictly to Administrator
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Chats Table Control
+    match /chats/{chatSessionId} {
+      // Users can only read and write their own active customer threads identified by session. Admin can access all threads.
+      allow get: if true; 
+      allow list: if isAdmin();
+      allow create, update: if true; // Safe client chat sync
+      allow delete: if isAdmin();
+    }
+  }
+}

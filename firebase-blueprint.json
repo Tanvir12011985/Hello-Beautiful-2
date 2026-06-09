@@ -1,0 +1,79 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "An ecommerce product item representing stock and pricing.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID for the product." },
+        "name": { "type": "string", "description": "Name of the beauty/cosmetic product." },
+        "category": { "type": "string", "description": "Matched category name." },
+        "stockQuantity": { "type": "integer", "description": "Current pieces of product in inventory." },
+        "buyingPrice": { "type": "number", "description": "Wholesale buying cost of product, for accounting profit margins." },
+        "sellingPrice": { "type": "number", "description": "Target resale retail price of product before discounts." },
+        "discountOffer": { "type": "integer", "description": "Percent discount from 0 to 100." },
+        "imageUrl": { "type": "string", "description": "Unsplash or Firebase Storage public URL of product photo." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "ISO string date created." }
+      },
+      "required": ["name", "category", "stockQuantity", "buyingPrice", "sellingPrice", "discountOffer", "imageUrl"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "A classification tier for products, e.g., Face Care.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier." },
+        "name": { "type": "string", "description": "The visual display label for filtering." }
+      },
+      "required": ["name"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "A customer transaction record representing purchased basket items and fulfillment details.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Printable Order Number (e.g. HB-10001)." },
+        "date": { "type": "string", "description": "Pretty print creation date." },
+        "customerName": { "type": "string", "description": "Customer name." },
+        "address": { "type": "string", "description": "Delivery address details." },
+        "mobileNumber": { "type": "string", "description": "Mobile number for delivery agent contact." },
+        "paymentMethod": { "type": "string", "enum": ["Cash on Delivery", "Bkash", "Nagad"] },
+        "deliveryRegion": { "type": "string", "enum": ["Inside Dhaka", "Outside Dhaka"] },
+        "deliveryCharge": { "type": "integer", "enum": [80, 120] },
+        "subtotal": { "type": "number", "description": "Aggregate price of items before shipping charge." },
+        "totalAmount": { "type": "number", "description": "Subtotal plus delivery charge." },
+        "orderStatus": { "type": "string", "enum": ["Order Confirmed", "Packing Done", "Hand over to courier agent", "Delivery Done"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["customerName", "address", "mobileNumber", "paymentMethod", "deliveryRegion", "subtotal", "totalAmount", "orderStatus"]
+    },
+    "ChatSession": {
+      "title": "ChatSession",
+      "description": "A conversational messaging session between customer and admin.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique customer session ID cookie/local identifier." },
+        "messages": {
+          "type": "array",
+          "description": "Chronological history of chat logs between standard sender and admin.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sender": { "type": "string", "enum": ["customer", "admin"] },
+              "text": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" }
+            }
+          }
+        },
+        "lastMessageAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["messages", "lastMessageAt"]
+    }
+  },
+  "firestore": {
+    "products": { "schema": "Product", "description": "Full directory of active makeup, cosmetic, and beauty products." },
+    "categories": { "schema": "Category", "description": "All system categories shown in the customer shop filters." },
+    "orders": { "schema": "Order", "description": "Customer checkout records for courier shipping and accounting ledgers." },
+    "chats": { "schema": "ChatSession", "description": "Live messaging sessions between customers and administration." }
+  }
+}
